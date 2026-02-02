@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { width: 360px; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background: #f8f9fa; }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #9C27B0, #E91E63);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3);
+            position: relative;
+        }
+        .header h2 { margin: 0; font-size: 18px; font-weight: 600; }
+        .back-btn { 
+            position: absolute; left: 15px; top: 15px; 
+            cursor: pointer; display: none; 
+            font-size: 12px; font-weight: 500; text-transform: uppercase;
+            color: white; background: rgba(255, 255, 255, 0.2); 
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 6px; padding: 4px 10px;
+            transition: 0.2s;
+        }
+        .back-btn:hover { background: rgba(255, 255, 255, 0.4); }
+
+        /* Container */
+        .container { padding: 15px; min-height: 450px; }
+        .page { display: none; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- New: Settings Navbar (Tabs) --- */
+        .nav-tabs {
+            display: flex;
+            justify-content: space-between;
+            background: #eee;
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 15px;
+        }
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 11px;
+            color: #666;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+        .nav-tab.active {
+            background: #E91E63;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.2s; }
+
+        /* Card */
+        .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #eee; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .card-title { font-weight: 600; color: #333; font-size: 14px; }
+        
+        .desc-text { font-size: 11px; color: #888; margin: 0; line-height: 1.4; padding-right: 40px; }
+        .item-row { margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+        .item-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+        /* Buttons */
+        .btn-main {
+            width: 100%; padding: 12px; border: none; border-radius: 12px;
+            font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px;
+            color: white; transition: transform 0.1s; text-align: center;
+        }
+        .btn-main:active { transform: scale(0.98); }
+        
+        /* ปุ่มสีต่างๆ */
+        .btn-history { background: #BA68C8; box-shadow: 0 4px 10px rgba(186, 104, 200, 0.4); }
+        .btn-graph   { background: #3F51B5; box-shadow: 0 4px 10px rgba(63, 81, 181, 0.4); } 
+        .btn-setting { background: #E91E63; box-shadow: 0 4px 10px rgba(233, 30, 99, 0.4); }
+        .btn-save    { background: #4CAF50; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3); margin-top: 20px; }
+
+        /* Switch Toggle */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e0e0e0; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: #E91E63; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        input:disabled + .slider { background-color: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="back-btn" id="backBtn">Back</button>
+        <h2 id="headerTitle">CookiesChecker</h2>
+    </div>
+
+    <div class="container">
+        
+        <div id="homePage" class="page active">
+            <div class="card" style="text-align: center; padding: 30px 15px;">
+                <img src="icon_Home.png" width="80" style="margin-bottom: 15px; border-radius: 50%;">
+                <p style="color: #888; font-size: 12px; margin: 0;">Current Website</p>
+                <h3 id="currentDomain" style="margin: 5px 0 0 0; color: #E91E63;">Loading...</h3>
+            </div>
+            
+            <button class="btn-main btn-history" id="goHistory">View History</button>
+            
+            <button class="btn-main btn-graph" id="btnOpenGraph">View Graph Relationship</button>
+            
+            <button class="btn-main btn-setting" id="goSetting">Settings</button>
+        </div>
+
+        <div id="historyPage" class="page">
+            <div id="historyList">
+                <p style="text-align:center; color:#aaa; margin-top: 20px;">Loading data...</p>
+            </div>
+        </div>
+
+        <div id="settingPage" class="page">
+            
+            <div class="nav-tabs">
+                <div class="nav-tab active" data-tab="tabGeneral">General</div>
+                <div class="nav-tab" data-tab="tabFilter">Filter List</div>
+                <div class="nav-tab" data-tab="tabPersonal">Personalize</div>
+                <div class="nav-tab" data-tab="tabAbout">About</div>
+            </div>
+
+            <div id="tabGeneral" class="tab-content active">
+                <div class="card">
+                    <div class="item-row">
+                        <div class="card-header">
+                            <span class="card-title">Auto Filter</span>
+                            <label class="switch"><input type="checkbox" id="autoFilter"><span class="slider"></span></label>
+                        </div>
+                        <p class="desc-text">Automatically block cookies based on your preferences.</p>
+                    </div>
+                    <div class="item-row">
+                        <div class="card-header">
+                            <span class="card-title">Notifications</span>
+                            <label class="switch"><input type="checkbox" id="enableNotify"><span class="slider"></span></label>
+                        </div>
+                        <p class="desc-text">Alert when a site uses Tracking/Ads cookies.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabFilter" class="tab-content">
+                <div class="card">
+                    <div class="item-row">
+                        <div class="card-header">
+                            <span class="card-title">Strictly Necessary</span>
+                            <label class="switch"><input type="checkbox" checked disabled><span class="slider"></span></label>
+                        </div>
+                        <p class="desc-text">Essential for website function (e.g., login). Cannot be disabled.</p>
+                    </div>
+                    <div class="item-row">
+                        <div class="card-header">
+                            <span class="card-title">Performance</span>
+                            <label class="switch"><input type="checkbox" id="Performance Cookies"><span class="slider"></span></label>
+                        </div>
+                        <p class="desc-text">Collects anonymous stats to improve website speed and performance.</p>
+                    </div>
+                    <div class="item-row">
+                        <div class="card-header">
+                            <span class="card-title">Functionality</span>
+                            <label class="switch"><input type="checkbox" id="Functionality Cookies"><span class="slider"></span></label>
+                        </div>
+                        <p class="desc-text">Remembers your settings like language, region, or font size.</p>
+                    </div>
+                    <div class="item-row">
+                        <div class="card-header">
+                            <span class="card-title">Ads / Tracking</span>
+                            <label class="switch"><input type="checkbox" id="Targeting or Advertising Cookies"><span class="slider"></span></label>
+                        </div>
+                        <p class="desc-text">Tracks browsing habits to show relevant ads and profile you.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabPersonal" class="tab-content">
+                <div class="card">
+                    <div class="item-row">
+                        <div class="card-header"><span class="card-title">Theme</span></div>
+                        <p class="desc-text">Light Mode (Default)</p>
+                    </div>
+                    <div class="item-row">
+                        <div class="card-header"><span class="card-title">Language</span></div>
+                        <p class="desc-text">English</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabAbout" class="tab-content">
+                <div class="card" style="text-align: center;">
+                    <img src="icon_About.png" width="60" style="margin-bottom: 10px; border-radius: 12px;">
+                    
+                    <h3 style="margin:0; color:#333;">CookiesChecker</h3>
+                    <p style="color:#888; font-size:12px; margin: 5px 0 0 0;">Version 1.0</p>
+                    
+                    <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+                    
+                    <p class="desc-text" style="text-align:center; padding-right: 0;">
+                        © 2025 CookiesChecker.
+                    </p>
+                    </div>
+            </div>
+            
+            <button class="btn-main btn-save" id="saveSetting">Save Preferences</button>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
