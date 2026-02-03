@@ -5,42 +5,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadGraph() {
     try {
-        console.log("Fetching graph data...");
-
-        // ใช้ 127.0.0.1 และดึงรวมเลย (ไม่ต้องเช็ก ?site=...)
-        const apiUrl = 'http://127.0.0.1:5000/graph-data';
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetSite = urlParams.get('site');
         
-        console.log("Calling API:", apiUrl);
+        let apiUrl = 'http://127.0.0.1:5000/graph-data';
+        if (targetSite) {
+            apiUrl += `?site=${encodeURIComponent(targetSite)}`;
+        }
 
         const response = await fetch(apiUrl);
-        if (!response.ok) {
-            throw new Error(`HTTP Error: ${response.status}`);
-        }
-
         const data = await response.json();
         const container = document.getElementById('mynetwork');
-        
-        if (typeof vis === 'undefined') {
-            throw new Error("Library 'vis' not found.");
-        }
 
-        const nodes = new vis.DataSet(data.nodes);
-        const edges = new vis.DataSet(data.edges);
-        const networkData = { nodes: nodes, edges: edges };
+        const processedNodes = data.nodes.map(node => {
+            if (targetSite && node.label === targetSite) {
+                return {
+                    ...node,
+                    size: 40,
+                    color: { background: '#1e8449', border: '#145a32' }, // สีเขียวเข้มสำหรับจุดหลัก
+                    font: { size: 18, weight: 'bold' }
+                };
+            }
+            return node;
+        });
+
+        const networkData = { 
+            nodes: new vis.DataSet(processedNodes), 
+            edges: new vis.DataSet(data.edges) 
+        };
 
         const options = {
-            nodes: {
-                shape: 'dot',
-                size: 20,
-                font: { size: 14 }
-            },
+            nodes: { shape: 'dot', size: 25 },
             groups: {
-                website: { color: { background: '#2ecc71', border: '#27ae60' }, shape: 'dot' },
-                tracker: { color: { background: '#e74c3c', border: '#c0392b' }, shape: 'dot' }
+                website: { color: '#2ecc71' },
+                tracker: { color: '#e74c3c' }
+            },
+            edges: {
+                arrows: { to: { enabled: true } }, // แสดงลูกศรชี้ไปยังผู้รับข้อมูล
+                font: { size: 10, align: 'top', color: '#666' },
+                color: '#bdc3c7'
             },
             physics: {
-                stabilization: false,
-                barnesHut: { gravitationalConstant: -3000 }
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -12000, // ผลักกันแรงขึ้นเพื่อไม่ให้ทับกัน
+                    springLength: 200
+                },
+                stabilization: { iterations: 150 } // ให้กราฟคำนวณตำแหน่งให้เสร็จก่อนโชว์
             }
         };
 
@@ -48,6 +59,5 @@ async function loadGraph() {
 
     } catch (err) {
         console.error("Graph Error:", err);
-        alert("เกิดข้อผิดพลาด: " + err.message + "\n(เช็ก Python Server หรือกด Reload Extension)");
     }
 }

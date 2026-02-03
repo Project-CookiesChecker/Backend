@@ -159,52 +159,62 @@ def predict():
 
 @app.route('/graph-data', methods=['GET'])
 def get_graph_data():
-    try:
-        # กลับมาใช้ Query แบบเดิม (ดึงรวม)
-        query = """
-        MATCH (n)-[r]->(m)
-        RETURN n, r, m LIMIT 100
-        """
-        
-        nodes = []
-        edges = []
-        node_ids = set()
+    target_site = request.args.get('site')
+    nodes = []
+    edges = []
+    node_ids = set()
 
+    try:
         if driver:
             with driver.session() as session:
-                result = session.run(query)
+                # Query แบบเจาะจงเว็บที่เปิดอยู่ (โชว์การส่งต่อข้อมูล 2 ทอด)
+                if target_site:
+                    query = """
+                    MATCH (s:Website {name: $site})-[r1]->(m)
+                    OPTIONAL MATCH (m)-[r2]->(p)
+                    RETURN s, r1, m, r2, p
+                    """
+                    result = session.run(query, site=target_site)
+                else:
+                    # ถ้าไม่ได้ระบุเว็บ ให้ดึงภาพรวมทั้งหมด
+                    query = "MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 100"
+                    result = session.run(query)
+
                 for record in result:
-                    n = record['n']
-                    m = record['m']
-                    r = record['r']
+                    # จัดการ Node และ Edge (Logic เดิมที่ปรับปรุงให้รองรับหลายทอด)
+                    items = [('n', 'r', 'm')] if not target_site else [('s', 'r1', 'm'), ('m', 'r2', 'p')]
+                    for n_key, r_key, m_key in items:
+                        n = record.get(n_key)
+                        m = record.get(m_key)
+                        r = record.get(r_key)
 
-                    if n.element_id not in node_ids:
-                        nodes.append({
-                            "id": n.element_id,
-                            "label": n.get("name", "Unknown"),
-                            "group": "website" if "Website" in n.labels else "tracker"
-                        })
-                        node_ids.add(n.element_id)
+                        if n and n.element_id not in node_ids:
+                            nodes.append({
+                                "id": n.element_id,
+                                "label": n.get("name", "Unknown"),
+                                "group": "website" if "Website" in n.labels else "tracker"
+                            })
+                            node_ids.add(n.element_id)
 
-                    if m.element_id not in node_ids:
-                        nodes.append({
-                            "id": m.element_id,
-                            "label": m.get("name", "Unknown"),
-                            "group": "website" if "Website" in m.labels else "tracker"
-                        })
-                        node_ids.add(m.element_id)
+                        if m and m.element_id not in node_ids:
+                            nodes.append({
+                                "id": m.element_id,
+                                "label": m.get("name", "Unknown"),
+                                "group": "website" if "Website" in m.labels else "tracker"
+                            })
+                            node_ids.add(m.element_id)
 
-                    edges.append({
-                        "from": n.element_id,
-                        "to": m.element_id,
-                        "label": r.get("type", "LINK"),
-                        "arrows": "to"
-                    })
+                        if n and m and r:
+                            edges.append({
+                                "from": n.element_id,
+                                "to": m.element_id,
+                                "label": r.get("type", "LINK"),
+                                "arrows": "to"
+                            })
 
         return jsonify({"nodes": nodes, "edges": edges})
-
     except Exception as e:
-        print(f"[ERROR] Get Graph Failed: {e}")
+        print(f"[ERROR] Graph Query Failed: {e}")
         return jsonify({"nodes": [], "edges": []})
 
 if __name__ == '__main__':

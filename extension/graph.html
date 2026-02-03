@@ -7,9 +7,12 @@
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #f0f0f0; overflow: hidden; }
         #mynetwork { width: 100vw; height: 100vh; background: #ffffff; position: absolute; top: 0; left: 0; z-index: 1; }
         .controls { position: absolute; top: 15px; left: 15px; z-index: 100; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        button { padding: 8px 18px; background: #ff4757; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .legend { position: absolute; bottom: 25px; right: 25px; z-index: 100; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 13px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        button { padding: 8px 18px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .legend { position: absolute; bottom: 25px; right: 25px; z-index: 100; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 13px; color: #333; }
+        .legend h4 { margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+        .arrow { font-size: 18px; margin-right: 8px; line-height: 1; }
     </style>
     <script src="vis-network.min.js"></script>
 </head>
@@ -18,10 +21,30 @@
         <h3 style="margin:0 0 10px 0;">Cookie Tracker Graph</h3>
         <button id="refreshBtn">Reload Graph</button>
     </div>
+
     <div class="legend">
-        <div style="margin-bottom:5px;"><span class="dot" style="background:#2ecc71;"></span>Website</div>
-        <div><span class="dot" style="background:#e74c3c;"></span>Tracker</div>
+        <h4>Graph Legend</h4>
+        <div class="legend-item">
+            <span class="dot" style="background:#1e8449; border: 1px solid #145a32;"></span>
+            <span><b>Dark Green:</b> Current Site (Source)</span>
+        </div>
+        <div class="legend-item">
+            <span class="dot" style="background:#2ecc71;"></span>
+            <span><b>Light Green:</b> Other Websites</span>
+        </div>
+        <div class="legend-item">
+            <span class="dot" style="background:#e74c3c;"></span>
+            <span><b>Red Node:</b> Third-Party Tracker</span>
+        </div>
+        <div class="legend-item">
+            <span class="arrow">➔</span>
+            <span><b>Arrow:</b> Data Sharing Direction</span>
+        </div>
+        <div style="font-size: 11px; color: #666; margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px;">
+            * Based on your browsing history and AI classification.
+        </div>
     </div>
+
     <div id="mynetwork"></div>
     <script src="graph.js"></script>
 </body>

@@ -24,11 +24,27 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('goSetting').addEventListener('click', () => showPage('setting', 'Settings'));
     backBtn.addEventListener('click', () => showPage('home', 'CookiesChecker'));
 
-    // กลับมาเป็นแบบเปิดหน้ากราฟปกติ (ไม่ต้องส่ง ?site=...)
+    // --- GRAPH LOGIC (ปรับปรุงตามขั้นตอนที่ 3) ---
     const btnGraph = document.getElementById('btnOpenGraph');
     if (btnGraph) {
-        btnGraph.addEventListener('click', () => {
-            chrome.tabs.create({ url: 'graph.html' });
+        btnGraph.addEventListener('click', async () => {
+            try {
+                // 1. ดึงข้อมูล Tab ปัจจุบันที่กำลัง Active อยู่
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                
+                if (tab && tab.url && tab.url.startsWith('http')) {
+                    const url = new URL(tab.url);
+                    const domain = url.hostname;
+                    // 2. เปิดหน้ากราฟพร้อมส่ง Domain ปัจจุบันไปใน Query String (?site=...)
+                    chrome.tabs.create({ url: `graph.html?site=${encodeURIComponent(domain)}` });
+                } else {
+                    // กรณีเปิดหน้า Browser พิเศษ (เช่น chrome://) ให้เปิดกราฟรวมปกติ
+                    chrome.tabs.create({ url: 'graph.html' });
+                }
+            } catch (e) {
+                console.error("Error opening graph:", e);
+                chrome.tabs.create({ url: 'graph.html' });
+            }
         });
     }
 
@@ -69,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const listDiv = document.getElementById('historyList');
         listDiv.innerHTML = '<p style="text-align:center; color:#aaa;">Loading...</p>';
         try {
-            // ใช้ 127.0.0.1
             const res = await fetch('http://127.0.0.1:5000/history');
             const data = await res.json();
             listDiv.innerHTML = '';
