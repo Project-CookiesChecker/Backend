@@ -9,7 +9,7 @@ from neo4j import GraphDatabase
 
 app = Flask(__name__)
 # อนุญาต CORS ทุกกรณีเพื่อป้องกันปัญหาการเชื่อมต่อ
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app)
 
 # ==========================================
 # 1. CONFIGURATION
