@@ -1,47 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Cookie Graph Visualization</title>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #f0f0f0; overflow: hidden; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f0f0; overflow: hidden; }
         #mynetwork { width: 100vw; height: 100vh; background: #ffffff; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        /* Control Panel */
         .controls { position: absolute; top: 15px; left: 15px; z-index: 100; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        button { padding: 8px 18px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .legend { position: absolute; bottom: 25px; right: 25px; z-index: 100; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 13px; color: #333; }
-        .legend h4 { margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        button { padding: 8px 18px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        button:hover { background: #218838; }
+
+        /* Graph Legend */
+        .legend { position: absolute; bottom: 25px; right: 25px; z-index: 100; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 13px; color: #333; min-width: 240px; }
+        .legend h4 { margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; color: #2c3e50; }
+        
+        .legend-section { margin-bottom: 10px; font-weight: bold; font-size: 11px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
         .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
+        
+        /* Legend Visuals */
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; }
-        .arrow { font-size: 18px; margin-right: 8px; line-height: 1; }
+        .line { width: 25px; height: 4px; border-radius: 2px; display: inline-block; margin-right: 10px; }
+        
+        .footer-note { font-size: 11px; color: #666; margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; line-height: 1.4; }
     </style>
     <script src="vis-network.min.js"></script>
 </head>
 <body>
     <div class="controls">
-        <h3 style="margin:0 0 10px 0;">Cookie Tracker Graph</h3>
+        <h3 style="margin:0 0 5px 0;">Cookie Tracker Graph</h3>
         <button id="refreshBtn">Reload Graph</button>
     </div>
 
     <div class="legend">
         <h4>Graph Legend</h4>
+        
+        <div class="legend-section">Nodes</div>
         <div class="legend-item">
             <span class="dot" style="background:#1e8449; border: 1px solid #145a32;"></span>
-            <span><b>Dark Green:</b> Current Site (Source)</span>
-        </div>
-        <div class="legend-item">
-            <span class="dot" style="background:#2ecc71;"></span>
-            <span><b>Light Green:</b> Other Websites</span>
+            <span><b>Target Site:</b> Source Website</span>
         </div>
         <div class="legend-item">
             <span class="dot" style="background:#e74c3c;"></span>
-            <span><b>Red Node:</b> Third-Party Tracker</span>
+            <span><b>Red Node:</b> Known Tracker</span>
+        </div>
+
+        <div style="margin: 12px 0; border-top: 1px solid #eee;"></div>
+
+        <div class="legend-section">Cookie Types (Edges)</div>
+        <div class="legend-item">
+            <span class="line" style="background:#2ecc71;"></span>
+            <span>Strictly Necessary</span>
         </div>
         <div class="legend-item">
-            <span class="arrow">➔</span>
-            <span><b>Arrow:</b> Data Sharing Direction</span>
+            <span class="line" style="background:#f1c40f;"></span>
+            <span>Performance</span>
         </div>
-        <div style="font-size: 11px; color: #666; margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px;">
-            * Based on your browsing history and AI classification.
+        <div class="legend-item">
+            <span class="line" style="background:#3498db;"></span>
+            <span>Functionality</span>
+        </div>
+        <div class="legend-item">
+            <span class="line" style="background:#e74c3c;"></span>
+            <span>Ads / Tracking</span>
+        </div>
+
+        <div class="footer-note">
+            * Arrows (➔) indicate data flow direction.<br>
+            * Classification powered by AI model.
         </div>
     </div>
 
