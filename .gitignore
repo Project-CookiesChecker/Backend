@@ -1,18 +1,14 @@
 
-ven10/
+venv10/
 venv/
-env/
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-.DS_Store
-Thumbs.db
-
 node_modules/
-hf_cookie_model/
-saved_model/
+__pycache__/
+
+# ไฟล์โมเดลและไฟล์ฐานข้อมูลที่ใหญ่เกินไป
+hf_cookie_model_balanced/
+*.sql
 *.joblib
 *.pkl
+
+# ไฟล์ขยะของระบบปฏิบัติการ
+.DS_Store

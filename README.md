@@ -8,8 +8,7 @@
 
 pip install -r requirements.txt
 
-▶️ วิธีรันโปรแกรม (Usage)
-!!! ก่อนอื่นต้องรันไฟล์ train model ตามลำดับเหมือนขั้นตอน train นะ !!!
+นำโฟลเดอร์ hf_cookie_model_balanced ไปวางไว้ในโฟลเดอร์โปรเจกต์ CookiesChecker
 
 รัน Python Server
 เปิด Terminal ในโฟลเดอร์งาน

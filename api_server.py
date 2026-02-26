@@ -2,9 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import mysql.connector
 import torch
-from transformers import BertTokenizer, BertModel
-import joblib
-import numpy as np
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from neo4j import GraphDatabase
 
 app = Flask(__name__)
@@ -38,28 +36,27 @@ except Exception as e:
     print(f"[ERROR] Neo4j Connection Failed: {e}")
 
 # ==========================================
-# 2. AI MODEL LOADING
+# 2. AI MODEL LOADING 
 # ==========================================
 print("[SYSTEM] Loading AI Models...")
+HF_MODEL_DIR = './hf_cookie_model_balanced' 
+
 try:
-    tokenizer = BertTokenizer.from_pretrained('./saved_model/')
-    model = BertModel.from_pretrained('./saved_model/')
-    clf = joblib.load('./saved_model/clf_model.pkl')
-    le = joblib.load('./saved_model/label_encoder.pkl')
+    # ใช้ AutoTokenizer และ SequenceClassification 
+    tokenizer = AutoTokenizer.from_pretrained(HF_MODEL_DIR)
+    model = AutoModelForSequenceClassification.from_pretrained(HF_MODEL_DIR)
     
-    ID2LABEL = {i: label for i, label in enumerate(le.classes_)}
-    print("[SYSTEM] AI Models Loaded Successfully!")
+    # ตรวจสอบว่าเครื่องมีการ์ดจอไหม ถ้าไม่มีให้ใช้ CPU 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device).eval()
+    
+    # ดึง Label ออกมาจากสมองของโมเดลโดยตรง
+    ID2LABEL = model.config.id2label
+    print(f"[SYSTEM] AI Model (Balanced) Loaded Successfully on {device}!")
 
 except Exception as e:
     print(f"[ERROR] Loading Model: {e}")
     ID2LABEL = {0: "Unknown"}
-
-def get_embedding(text):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=128)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    return outputs.last_hidden_state[:, 0, :].numpy()
-
 
 # ==========================================
 # 3. NEO4J FUNCTION
@@ -91,27 +88,27 @@ def push_to_neo4j(source_site, tracker_domain, label):
         except Exception as e:
             print(f"[ERROR] Neo4j Error: {e}")
 
-
 # ==========================================
 # 4. API ROUTES 
 # ==========================================
 
 @app.route('/', methods=['GET'])
 def home():
-    return "CookiesChecker API is Running!"
+    return "CookiesChecker API is Running with High Accuracy Model!"
 
-@app.route('/history', methods=['GET'])
-def get_history():
-    try:
-        conn = mysql.connector.connect(**MYSQL_CONFIG)
-        cursor = conn.cursor(dictionary=True)
-        sql = "SELECT domain, GROUP_CONCAT(DISTINCT label SEPARATOR ', ') as labels FROM cookies GROUP BY domain ORDER BY MAX(id) DESC LIMIT 20"
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        conn.close()
-        return jsonify(rows)
-    except Exception as e:
-        return jsonify([])
+# --- ซ่อน API History  ---
+# @app.route('/history', methods=['GET'])
+# def get_history():
+#     try:
+#         conn = mysql.connector.connect(**MYSQL_CONFIG)
+#         cursor = conn.cursor(dictionary=True)
+#         sql = "SELECT domain, GROUP_CONCAT(DISTINCT label SEPARATOR ', ') as labels FROM cookies GROUP BY domain ORDER BY MAX(id) DESC LIMIT 20"
+#         cursor.execute(sql)
+#         rows = cursor.fetchall()
+#         conn.close()
+#         return jsonify(rows)
+#     except Exception as e:
+#         return jsonify([])
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -124,24 +121,40 @@ def predict():
         conn = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = conn.cursor(dictionary=True)
         
+        # 1. เช็คใน Database ก่อนว่ามีไหม
         cursor.execute("SELECT label FROM cookies WHERE name=%s AND domain=%s LIMIT 1", (name, domain))
         result = cursor.fetchone()
 
         label = "Unknown"
         source = "ai_model"
 
-        if result and result['label']:
+        if result and result['label'] and result['label'] != 'Unknown':
             label = result['label']
             source = "database"
         else:
+            # 2. ถ้าไม่มีใน Database ให้ AI ทำนาย
             try:
                 text = f"{name} | {domain}"
-                embedding = get_embedding(text)
-                pred_id = clf.predict(embedding)[0]
-                label = ID2LABEL[int(pred_id)]
-            except:
+                
+                # แปลงข้อความเป็นตัวเลข
+                inputs = tokenizer(
+                    text, 
+                    return_tensors="pt", 
+                    truncation=True, 
+                    padding=True, 
+                    max_length=64
+                ).to(device)
+                
+                # ให้ AI ทำนาย
+                with torch.no_grad():
+                    outputs = model(**inputs)
+                    pred_id = torch.argmax(outputs.logits, dim=-1).item()
+                    label = ID2LABEL[pred_id]
+            except Exception as e:
+                print(f"[ERROR] AI Prediction Failed: {e}")
                 label = "Unknown"
 
+            # บันทึกสิ่งที่ทำนายลง Database
             sql = "INSERT INTO cookies (name, domain, label, label_source) VALUES (%s, %s, %s, 'ai_predicted') ON DUPLICATE KEY UPDATE label=%s"
             cursor.execute(sql, (name, domain, label, label))
             conn.commit()
@@ -167,7 +180,6 @@ def get_graph_data():
     try:
         if driver:
             with driver.session() as session:
-                # Query แบบเจาะจงเว็บที่เปิดอยู่ (โชว์การส่งต่อข้อมูล 2 ทอด)
                 if target_site:
                     query = """
                     MATCH (s:Website {name: $site})-[r1]->(m)
@@ -176,12 +188,10 @@ def get_graph_data():
                     """
                     result = session.run(query, site=target_site)
                 else:
-                    # ถ้าไม่ได้ระบุเว็บ ให้ดึงภาพรวมทั้งหมด
                     query = "MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 100"
                     result = session.run(query)
 
                 for record in result:
-                    # จัดการ Node และ Edge (Logic เดิมที่ปรับปรุงให้รองรับหลายทอด)
                     items = [('n', 'r', 'm')] if not target_site else [('s', 'r1', 'm'), ('m', 'r2', 'p')]
                     for n_key, r_key, m_key in items:
                         n = record.get(n_key)
@@ -219,6 +229,7 @@ def get_graph_data():
 
 if __name__ == '__main__':
     try:
+        print("Starting CookiesChecker Server...")
         app.run(host='0.0.0.0', port=5000, threaded=True)
     finally:
         if driver:

@@ -3,23 +3,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- NAVIGATION LOGIC ---
     const pages = {
         home: document.getElementById('homePage'),
-        history: document.getElementById('historyPage'),
+        // ซ่อนตัวแปร history ไว้ เพราะเราคอมเมนต์หน้า historyPage ใน HTML ไปแล้ว
+        // history: document.getElementById('historyPage'), 
         setting: document.getElementById('settingPage')
     };
     const headerTitle = document.getElementById('headerTitle');
     const backBtn = document.getElementById('backBtn');
 
     function showPage(pageName, title) {
-        Object.values(pages).forEach(p => p.classList.remove('active'));
-        pages[pageName].classList.add('active');
+        Object.values(pages).forEach(p => {
+            if (p) p.classList.remove('active'); // ใส่ if(p) กันเหนียวเผื่อหาไม่เจอ
+        });
+        if (pages[pageName]) pages[pageName].classList.add('active');
         headerTitle.innerText = title;
         backBtn.style.display = pageName === 'home' ? 'none' : 'block';
     }
 
-    document.getElementById('goHistory').addEventListener('click', () => {
-        showPage('history', 'History');
-        loadHistory();
-    });
+    // --- ซ่อนการคลิกปุ่ม History ---
+    // document.getElementById('goHistory').addEventListener('click', () => {
+    //     showPage('history', 'History');
+    //     loadHistory();
+    // });
 
     document.getElementById('goSetting').addEventListener('click', () => showPage('setting', 'Settings'));
     backBtn.addEventListener('click', () => showPage('home', 'CookiesChecker'));
@@ -80,7 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- HISTORY LOGIC ---
+    // --- HISTORY LOGIC (ซ่อนการดึงข้อมูลจาก Server) ---
+    /*
     async function loadHistory() {
         const listDiv = document.getElementById('historyList');
         listDiv.innerHTML = '<p style="text-align:center; color:#aaa;">Loading...</p>';
@@ -107,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             listDiv.innerHTML = '<p style="text-align:center; color:red;">Cannot connect to Server</p>';
         }
     }
+    */
 
     // --- SETTINGS LOGIC ---
     const settingsKeys = ["Performance Cookies", "Functionality Cookies", "Targeting or Advertising Cookies", "enableNotify", "autoFilter"];
