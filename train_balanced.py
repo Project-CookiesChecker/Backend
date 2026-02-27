@@ -20,7 +20,7 @@ LABEL2ID = {
 ID2LABEL = {v: k for k, v in LABEL2ID.items()}
 
 PRETRAINED = "distilbert-base-uncased"
-SAVE_DIR = "./hf_cookie_model_balanced" # เซฟแยกโฟลเดอร์ใหม่ จะได้ไม่ทับของเดิม
+SAVE_DIR = "./hf_cookie_model_balanced" 
 
 class CookieDataset(Dataset):
     def __init__(self, texts, labels, tokenizer, max_len=64):
@@ -39,7 +39,7 @@ class CookieDataset(Dataset):
         return len(self.texts)
 
 def load_balanced_data(limit_per_class=90000):
-    print(f"[INFO] กำลังดึงข้อมูลหมวดละ {limit_per_class} รายการ เพื่อแก้ปัญหา Class Imbalance...")
+    print(f"[INFO] processing {limit_per_class} class to avoid Class Imbalance...")
     texts, labels = [], []
     try:
         conn = mysql.connector.connect(host=MYSQL_HOST, user=MYSQL_USER, password=MYSQL_PASSWORD, database=MYSQL_DB)
@@ -65,7 +65,7 @@ def load_balanced_data(limit_per_class=90000):
         if 'conn' in locals() and conn.is_connected():
             conn.close()
 
-    print(f"[INFO] ได้รับข้อมูลที่สมดุลแล้ว จำนวนรวม: {len(texts)} รายการ")
+    print(f"[INFO] Received data: {len(texts)} samples")
     return texts, labels
 
 def compute_metrics(eval_pred):
@@ -81,7 +81,7 @@ def main():
     texts, labels = load_balanced_data(limit_per_class=90000)
     
     if len(texts) == 0:
-        print("[ERROR] ไม่พบข้อมูล")
+        print("[ERROR] Could not load any data. Please check your MySQL connection and data.")
         return
 
     # 2. แบ่งข้อมูล Train 80% / Test 20%
@@ -119,19 +119,19 @@ def main():
         compute_metrics=compute_metrics
     )
 
-    print("[INFO] เริ่มกระบวนการเทรนโมเดล ...")
+    print("[INFO] Start training ...")
     trainer.train()
     
-    print("[INFO] ประเมินผลโมเดลขั้นสุดท้าย...")
+    print("[INFO] Final Evaluation...")
     metrics = trainer.evaluate()
     print("\n" + "="*50)
-    print(f"ความแม่นยำรวม (Accuracy) : {metrics['eval_accuracy']*100:.2f}%")
+    print(f"Accuracy : {metrics['eval_accuracy']*100:.2f}%")
     print(f"F1 Score (Macro)      : {metrics['eval_f1_macro']*100:.2f}%")
     print("="*50)
 
     trainer.save_model(SAVE_DIR)
     tokenizer.save_pretrained(SAVE_DIR)
-    print(f"[DONE] โมเดลที่สมดุลแล้วถูกเซฟไว้ที่ → {SAVE_DIR}")
+    print(f"[DONE] Model Saved → {SAVE_DIR}")
 
 if __name__ == "__main__":
     main()

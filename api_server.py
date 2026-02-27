@@ -147,9 +147,15 @@ def predict():
                 
                 # ให้ AI ทำนาย
                 with torch.no_grad():
-                    outputs = model(**inputs)
+                    outputs = model(
+                        input_ids=inputs["input_ids"], 
+                        attention_mask=inputs["attention_mask"]
+                    )
                     pred_id = torch.argmax(outputs.logits, dim=-1).item()
                     label = ID2LABEL[pred_id]
+                    
+                    print(f"[SUCCESS] AI Predicted: {name} => {label}")
+                    
             except Exception as e:
                 print(f"[ERROR] AI Prediction Failed: {e}")
                 label = "Unknown"

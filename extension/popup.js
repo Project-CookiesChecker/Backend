@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- NAVIGATION LOGIC ---
     const pages = {
         home: document.getElementById('homePage'),
-        // ซ่อนตัวแปร history ไว้ เพราะเราคอมเมนต์หน้า historyPage ใน HTML ไปแล้ว
+        // ซ่อนตัวแปร history 
         // history: document.getElementById('historyPage'), 
         setting: document.getElementById('settingPage')
     };
