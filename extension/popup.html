@@ -79,9 +79,13 @@
             color: white; transition: transform 0.1s; text-align: center;
         }
         .btn-main:active { transform: scale(0.98); }
+
+        .btn-history {
+         background: linear-gradient(135deg,#9C27B0,#E91E63);
+        box-shadow: 0 4px 10px rgba(156,39,176,0.4);
+        }
         
         /* ปุ่มสีต่างๆ */
-        .btn-history { background: #BA68C8; box-shadow: 0 4px 10px rgba(186, 104, 200, 0.4); }
         .btn-graph   { background: #3F51B5; box-shadow: 0 4px 10px rgba(63, 81, 181, 0.4); } 
         .btn-setting { background: #E91E63; box-shadow: 0 4px 10px rgba(233, 30, 99, 0.4); }
         .btn-save    { background: #4CAF50; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3); margin-top: 20px; }
@@ -94,6 +98,103 @@
         input:checked + .slider { background-color: #E91E63; }
         input:checked + .slider:before { transform: translateX(20px); }
         input:disabled + .slider { background-color: #ccc; cursor: not-allowed; }
+
+.cookie-filter{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:10px;
+    font-size:11px;
+}
+
+.cookie-filter label{
+    background:white;
+    padding:4px 8px;
+    border-radius:6px;
+    border:1px solid #eee;
+    cursor:pointer;
+}
+
+/* Center loading */
+.cookie-loading{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    height:320px;
+    text-align:center;
+}
+
+/* loading text */
+.cookie-loading-text{
+    font-size:13px;
+    color:#777;
+    margin-bottom:12px;
+}
+
+/* dots container */
+.cookie-dots{
+    display:flex;
+    gap:8px;
+}
+
+/* dots */
+.cookie-dots span{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#9C27B0,#E91E63);
+    animation:cookieBounce 1.2s infinite ease-in-out;
+}
+
+/* delay */
+.cookie-dots span:nth-child(2){
+    animation-delay:0.2s;
+}
+
+.cookie-dots span:nth-child(3){
+    animation-delay:0.4s;
+}
+
+/* animation */
+@keyframes cookieBounce{
+    0%,80%,100%{
+        transform:scale(0.5);
+        opacity:0.4;
+    }
+    40%{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+.cookie-name{
+    font-size:12px;
+    color:#777;
+    margin-top:3px;
+}
+
+.cookie-label{
+    font-size:11px;
+    color:#E91E63;
+    margin-top:4px;
+}
+
+.pagination{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:10px;
+}
+
+.pagination button{
+    padding:4px 10px;
+    border:none;
+    border-radius:6px;
+    background:#9c27b0;
+    color:white;
+    cursor:pointer;
+}
     </style>
 </head>
 <body>
@@ -115,6 +216,8 @@
             <button class="btn-main btn-graph" id="btnOpenGraph">View Graph Relationship</button>
             
             <button class="btn-main btn-setting" id="goSetting">Settings</button>
+
+            <button class="btn-main btn-history" id="btnCookieLog">Cookie Log</button>
         </div>
 
         <div id="settingPage" class="page">
@@ -144,6 +247,8 @@
                     </div>
                 </div>
             </div>
+
+            
 
             <div id="tabFilter" class="tab-content">
                 <div class="card">
@@ -208,7 +313,46 @@
             
             <button class="btn-main btn-save" id="saveSetting">Save Preferences</button>
         </div>
-    </div>
+
+    <div id="cookieLogPage" class="page">
+
+        <div class="cookie-filter">
+
+            <label>
+                <input type="checkbox" value="Strictly Necessary Cookies" checked>
+                Necessary
+            </label>
+
+            <label>
+                <input type="checkbox" value="Performance Cookies" checked>
+                Performance
+            </label>
+
+            <label>
+                <input type="checkbox" value="Functionality Cookies" checked>
+                Functionality
+            </label>
+
+            <label>
+                <input type="checkbox" value="Targeting or Advertising Cookies" checked>
+                Tracking
+            </label>
+
+            <label>
+                <input type="checkbox" value="Unknown" checked>
+                Unknown
+            </label>
+
+        </div>
+
+        <div id="cookieLogList"></div>
+
+        <div id="cookiePagination" class="pagination"></div>
+
+</div>
+
+</div>
+
 
     <script src="popup.js"></script>
 </body>
