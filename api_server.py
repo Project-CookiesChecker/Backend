@@ -109,9 +109,12 @@ def predict():
     try:
         data = request.json
         user_id = data.get('user_id') # รับ user_id จาก Extension
-        name = data.get('name', '')
-        domain = data.get('domain', '')
+        name = data.get('name', '').strip()
+        domain = data.get('domain', '').strip()
         source_site = data.get('source_site', 'Unknown_Source') 
+        
+        if not domain:
+            domain = "Unknown_Domain"
 
         if not user_id:
             return jsonify({"error": "Missing user_id"}), 400
@@ -120,7 +123,8 @@ def predict():
         cursor = conn.cursor(dictionary=True)
         
         # 1. เช็คใน Database MySQL
-        cursor.execute("SELECT label FROM cookies WHERE name=%s AND domain=%s LIMIT 1", (name, domain))
+        # cursor.execute("SELECT label FROM cookies WHERE name=%s AND domain=%s LIMIT 1", (name, domain))
+        cursor.execute("SELECT * FROM cookies WHERE domain LIKE %s ORDER BY id DESC LIMIT 200", ('%' + site + '%',) )
         result = cursor.fetchone()
 
         label = "Unknown"
@@ -132,13 +136,14 @@ def predict():
         else:
             # 2. ถ้าไม่มีให้ AI ทำนาย
             try:
-                text = f"{name} | {domain}"
+                # text = f"{name} | {domain}"
+                text = f"cookie_name={name}; domain={domain}"
                 inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=64).to(device)
                 
                 with torch.no_grad():
                     outputs = model(**inputs)
                     pred_id = torch.argmax(outputs.logits, dim=-1).item()
-                    label = ID2LABEL[pred_id]
+                    label = ID2LABEL.get(pred_id, "Unknown")
             except Exception as e:
                 print(f"[ERROR] AI Prediction Failed: {e}")
                 label = "Unknown"
@@ -215,7 +220,38 @@ def get_graph_data():
     except Exception as e:
         print(f"[ERROR] Graph Query Failed: {e}")
         return jsonify({"nodes": [], "edges": []})
+    
+@app.route('/history', methods=['GET'])
+def get_history():
+    try:
+        site = request.args.get('site')
 
+        conn = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = conn.cursor(dictionary=True)
+
+        if site:
+            cursor.execute("""
+                SELECT name, domain, label
+                FROM cookies
+                WHERE domain LIKE %s
+                ORDER BY name
+            """, (f"%{site}%",))
+        else:
+            cursor.execute("""
+                SELECT name, domain, label
+                FROM cookies
+                ORDER BY domain desc
+                LIMIT 100
+            """)
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return jsonify(rows)
+
+    except Exception as e:
+        print("[ERROR] History API:", e)
+        return jsonify([])
 if __name__ == '__main__':
     try:
         print("Starting CookiesChecker Server with Multi-User Support...")

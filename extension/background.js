@@ -7,6 +7,8 @@ let userSettings = {
     "autoFilter": true     
 };
 
+let blockedCounter = 0;
+
 const cache = {};
 const notifiedDomains = new Set();
 
@@ -29,7 +31,7 @@ async function getUserId() {
         });
     });
 }
-
+// the notification will reset when change tabs or refresh page
 chrome.storage.local.get(['settings'], (res) => {
     if (res.settings) userSettings = res.settings;
 });
@@ -38,6 +40,38 @@ chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === "UPDATE_SETTINGS") {
         userSettings = msg.settings;
     }
+});
+
+chrome.tabs.onActivated.addListener(() => {
+
+    blockedCounter = 0;
+
+    chrome.action.setBadgeText({
+        text: ""
+    });
+
+    chrome.storage.local.set({
+        threatCount: 0
+    });
+
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+
+    if (changeInfo.status === "loading") {
+
+        blockedCounter = 0;
+
+        chrome.action.setBadgeText({
+            text: ""
+        });
+
+        chrome.storage.local.set({
+            threatCount: 0
+        });
+
+    }
+
 });
 
 chrome.cookies.onChanged.addListener(async (changeInfo) => {
@@ -102,17 +136,35 @@ chrome.cookies.onChanged.addListener(async (changeInfo) => {
 
         cache[key] = label;
         processCookie(cookie, label);
-        checkAndNotify(cookie.domain, label);
+        // checkAndNotify(cookie.domain, label);
 
     } catch (err) {
         console.error("[ERROR] API Connection Failed:", err);
     }
 });
 
+function updateBadge() {
+
+    blockedCounter++;
+
+    chrome.action.setBadgeText({
+        text: blockedCounter.toString()
+    });
+
+    chrome.action.setBadgeBackgroundColor({
+        color: "#E91E63"
+    });
+
+    // for popup UI
+    chrome.storage.local.set({
+        threatCount: blockedCounter
+    });
+}
 function processCookie(cookie, label) {
     if (label === "Strictly Necessary Cookies") return;
 
     if (userSettings[label] === false) {
+        updateBadge();
         const protocol = cookie.secure ? "https:" : "http:";
         const domainUrl = protocol + "//" + cookie.domain.replace(/^\./, "") + cookie.path;
 
@@ -123,20 +175,22 @@ function processCookie(cookie, label) {
         });
     }
 }
+chrome.storage.local.get("threatCount", console.log)
+    // updateBadge();
 
-function checkAndNotify(domain, label) {
-    if (userSettings.enableNotify !== true) return;
-    if (label === "Targeting or Advertising Cookies") {
-        if (!notifiedDomains.has(domain)) {
-            chrome.notifications.create({
-                type: "basic",
-                iconUrl: "icon_Home.png", 
-                title: "Tracking Cookie Detected!",
-                message: `${domain} detected on this site.`,
-                priority: 2
-            });
-            notifiedDomains.add(domain);
-            setTimeout(() => notifiedDomains.delete(domain), 300000);
-        }
-    }
-}
+// function checkAndNotify(domain, label) {
+//     if (userSettings.enableNotify !== true) return;
+//     if (label === "Targeting or Advertising Cookies") {
+//         if (!notifiedDomains.has(domain)) {
+//             chrome.notifications.create({
+//                 type: "basic",
+//                 iconUrl: "icon_Home.png", 
+//                 title: "Tracking Cookie Detected!",
+//                 message: `${domain} detected on this site.`,
+//                 priority: 2
+//             });
+//             notifiedDomains.add(domain);
+//             setTimeout(() => notifiedDomains.delete(domain), 300000);
+//         }
+//     }
+// }

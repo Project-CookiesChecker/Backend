@@ -34,6 +34,23 @@ async function getUserId() {
     });
 }
 
+// //loading display functions
+// function showLoading(){
+//     document.getElementById("loadingOverlay").style.display = "flex";
+// }
+
+// function hideLoading(){
+//     document.getElementById("loadingOverlay").style.display = "none";
+// }
+
+function showLoading(){
+    document.getElementById("loadingOverlay").style.display = "flex";
+}
+
+function hideLoading(){
+    document.getElementById("loadingOverlay").style.display = "none";
+}
+
 /**
  * ฟังก์ชันตรวจสอบว่าเป็น Tracking หรือไม่ (เกณฑ์ตัดสินกลาง)
  * ใช้ทั้งการคำนวณสถิติ การระบายสีเส้น และการกรองข้อมูล
@@ -97,26 +114,28 @@ function calculateStats(edges) {
 /**
  * ดึงข้อมูลกราฟจาก API
  */
-async function loadGraph() {
-    try {
+async function loadGraph(){
+
+    showLoading();
+
+    try{
         const userId = await getUserId();
         const urlParams = new URLSearchParams(window.location.search);
         const targetSite = urlParams.get('site');
-        
+
         let apiUrl = `http://20.222.122.108:5000/graph-data?user_id=${userId}`;
-        if (targetSite) apiUrl += `&site=${encodeURIComponent(targetSite)}`;
+        if(targetSite) apiUrl += `&site=${encodeURIComponent(targetSite)}`;
 
         const response = await fetch(apiUrl);
         const data = await response.json();
 
-        // ต้องเก็บ Nodes ก่อน Edges เพื่อให้ calculateStats ค้นหา Domain ได้
         rawNodes = data.nodes || [];
         rawEdges = data.edges || [];
 
         calculateStats(rawEdges);
         applyFilterAndRender();
 
-    } catch (err) {
+    }catch(err){
         console.error("Graph Load Error:", err);
     }
 }
@@ -237,5 +256,9 @@ function applyFilterAndRender() {
     };
 
     if (network) network.destroy();
-    network = new vis.Network(container, networkData, options);
+network = new vis.Network(container, networkData, options);
+
+network.once("stabilizationIterationsDone", function () {
+    hideLoading();
+});
 }

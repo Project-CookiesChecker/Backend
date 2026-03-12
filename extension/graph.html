@@ -41,6 +41,115 @@
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; }
         .line { width: 25px; height: 4px; border-radius: 2px; display: inline-block; margin-right: 10px; }
         .footer-note { font-size: 11px; color: #666; margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; line-height: 1.4; }
+
+        /* Loading Spinner */
+/*#loadingOverlay{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    background:rgba(255,255,255,0.8);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:500;
+}
+
+.spinner{
+    width:50px;
+    height:50px;
+    border:6px solid #ddd;
+    border-top:6px solid #3498db;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+    */
+
+    /* Loading Overlay */
+#loadingOverlay{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    background:rgba(20,20,20,0.65);
+    backdrop-filter: blur(4px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:500;
+}
+
+/* Loader Box */
+.loader-box{
+    text-align:center;
+    color:white;
+    font-family:'Segoe UI', Tahoma, sans-serif;
+}
+
+/* Animated Nodes */
+.node-animation{
+    display:flex;
+    justify-content:center;
+    margin-bottom:15px;
+}
+
+.node-animation span{
+    width:12px;
+    height:12px;
+    margin:0 6px;
+    border-radius:50%;
+    animation:pulse 1.4s infinite ease-in-out;
+}
+
+/* Purple */
+.node-animation span:nth-child(1){
+    background:#b388ff;
+}
+
+/* Purple → pink */
+.node-animation span:nth-child(2){
+    background:#ff4fa3;
+    animation-delay:0.2s;
+}
+
+/* Red */
+.node-animation span:nth-child(3){
+    background:#ff5c6c;
+    animation-delay:0.4s;
+}
+
+.node-animation span:nth-child(2){
+    animation-delay:0.2s;
+}
+
+.node-animation span:nth-child(3){
+    animation-delay:0.4s;
+}
+
+/* Text */
+.loader-text{
+    font-size:16px;
+    letter-spacing:0.5px;
+}
+
+/* Animation */
+@keyframes pulse{
+    0%,80%,100%{
+        transform:scale(0);
+        opacity:0.5;
+    }
+    40%{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+@keyframes spin{
+    0%{ transform:rotate(0deg); }
+    100%{ transform:rotate(360deg); }
+}
     </style>
     <script src="vis-network.min.js"></script>
 </head>
@@ -128,6 +237,23 @@
             * Arrows (➔) show data flow direction.
         </div>
     </div>
+
+    <!-- loading -->
+
+    <!-- <div id="loadingOverlay">
+    <div class="spinner"></div>
+    </div> -->
+
+    <div id="loadingOverlay">
+    <div class="loader-box">
+        <div class="node-animation">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="loader-text">Analyzing Cookies & Trackers...</div>
+    </div>
+</div>
 
     <div id="mynetwork"></div>
     <script src="graph.js"></script>

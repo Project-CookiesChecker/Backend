@@ -8,9 +8,12 @@
     "notifications",
     "activeTab" 
   ],
-  "host_permissions": [
-    "http://20.222.122.108:5000/*"
-  ],
+"host_permissions": [
+  "http://127.0.0.1:5000/*",
+  "http://localhost:5000/*",
+  "http://20.222.122.108:5000/*",
+  "<all_urls>"
+],
   "background": {
     "service_worker": "background.js"
   },
@@ -19,6 +22,7 @@
     "default_icon": "icon_About.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://20.222.122.108:5000"
-  }
+  "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://127.0.0.1:5000 http://localhost:5000 http://20.222.122.108:5000"
+}
+  
 }
